@@ -8,6 +8,8 @@ This demo utilizes streaming for sst and tts to speed things up.
 
 Video tutorial coming soon
 
+Please create a .env file with DEEPGRAM_API_KEY and GROQ_API_KEY
+
 The files in `building_blocks` are the isolated components if you'd like to inspect them
 
 ```
