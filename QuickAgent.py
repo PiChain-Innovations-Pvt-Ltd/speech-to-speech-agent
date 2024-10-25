@@ -30,7 +30,7 @@ load_dotenv()
 
 class LanguageModelProcessor:
     def __init__(self):
-        self.llm = ChatGroq(temperature=0, model_name="mixtral-8x7b-32768", groq_api_key=os.getenv("GROQ_API_KEY"))
+        self.llm = ChatGroq(temperature=0, model_name="llama-3.2-3b-preview", groq_api_key=os.getenv("GROQ_API_KEY"))
         # self.llm = ChatOpenAI(temperature=0, model_name="gpt-4-0125-preview", openai_api_key=os.getenv("OPENAI_API_KEY"))
         # self.llm = ChatOpenAI(temperature=0, model_name="gpt-3.5-turbo-0125", openai_api_key=os.getenv("OPENAI_API_KEY"))
 
@@ -63,14 +63,14 @@ class LanguageModelProcessor:
 
         self.memory.chat_memory.add_ai_message(response['text'])  # Add AI response to memory
 
-        elapsed_time = int((end_time - start_time) * 1000)
-        print(f"LLM ({elapsed_time}ms): {response['text']}")
+        # elapsed_time = int((end_time - start_time) * 1000)
+        print(f"LLM ({end_time - start_time:.2f} seconds): {response['text']}")
         return response['text']
 
 class TextToSpeech:
     # Set your Deepgram API Key and desired voice model
     DG_API_KEY = os.getenv("DEEPGRAM_API_KEY")
-    MODEL_NAME = "aura-orpheus-en"  # Example model name, change as needed
+    MODEL_NAME = "aura-helios-en"  # Example model name, change as needed
 
     @staticmethod
     def is_installed(lib_name: str) -> bool:
@@ -90,7 +90,8 @@ class TextToSpeech:
             "text": text
         }
 
-        player_command = ["ffplay", "-autoexit", "-", "-nodisp"]
+        # player_command = ["ffplay", "-autoexit", "-", "-nodisp"]
+        player_command = ["mpv", "--no-video", "--ao=alsa", "--", "-"]
         player_process = subprocess.Popen(
             player_command,
             stdin=subprocess.PIPE,
@@ -106,8 +107,8 @@ class TextToSpeech:
                 if chunk:
                     if first_byte_time is None:  # Check if this is the first chunk received
                         first_byte_time = time.time()  # Record the time when the first byte is received
-                        ttfb = int((first_byte_time - start_time)*1000)  # Calculate the time to first byte
-                        print(f"TTS Time to First Byte (TTFB): {ttfb}ms\n")
+                        # ttfb = int((first_byte_time - start_time)*1000)  # Calculate the time to first byte
+                        print(f"TTS Time to First Byte (TTFB): {first_byte_time - start_time:.2f} seconds\n")
                     player_process.stdin.write(chunk)
                     player_process.stdin.flush()
 
@@ -208,8 +209,16 @@ class ConversationManager:
             
             llm_response = self.llm.process(self.transcription_response)
 
+            start_time = time.time()
+
             tts = TextToSpeech()
+            
             tts.speak(llm_response)
+
+            end_time = time.time()
+            print(f"Total time for transcription and processing: {end_time - start_time:.2f} seconds")
+
+            
 
             # Reset transcription_response for the next loop iteration
             self.transcription_response = ""
